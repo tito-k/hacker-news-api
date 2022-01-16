@@ -1,0 +1,22 @@
+[
+    {
+        "name": "job",
+        "code": "job"
+    },
+    {
+        "name": "story",
+        "code": "story"
+    },
+    {
+        "name": "comment",
+        "code": "comment"
+    },
+    {
+        "name": "poll",
+        "code": "poll"
+    },
+    {
+        "name": "pollopt",
+        "code": "pollopt"
+    }
+]
