@@ -1,0 +1,9 @@
+*.vscode
+*.env
+__pycache__/
+db.sqlite3
+db.sqlite3-journal
+migrations/
+staticfiles
+seed_data.json
+venv
