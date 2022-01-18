@@ -1,76 +1,28 @@
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.core.validators import int_list_validator
+from django_unixdatetimefield import UnixDateTimeField
 
 from hacker_news_api.choices import items_choices
 
-from django_unixdatetimefield import UnixDateTimeField
-
 class Base(models.Model):
-    id = models.PositiveIntegerField(unique=True, editable=False)
+    id = models.BigAutoField(primary_key=True, unique=True, editable=False)
     deleted = models.BooleanField(default=False, null=True, blank=True)
     type = models.CharField(max_length=20, choices=items_choices)
-    by = models.CharField(max_length=255, null=True, blank=True)
-    time = UnixDateTimeField()
-    dead = models.BooleanField(null=True, blank=True)
-    kids = models.CharField(validators=int_list_validator, null=True, blank=True)
+    by = models.CharField(max_length=255, null=True, blank=True, default=None)
+    time = UnixDateTimeField(null=True, blank=True)
+    dead = models.BooleanField(null=True, blank=True, default=False)
+    kids = ArrayField(models.PositiveIntegerField(null=True, blank=True), null=True, blank=True, default=None)
+    parts = ArrayField(models.PositiveIntegerField(null=True, blank=True), null=True, blank=True, default=None)
+    parent = models.PositiveIntegerField(null=True, blank=True, default=None)
+    text = models.TextField(null=True, blank=True, default=None)
+    descendants = models.PositiveIntegerField(null=True, blank=True, default=None)
+    score = models.PositiveIntegerField(null=True, blank=True, default=None)
+    url = models.URLField(max_length=512, null=True, blank=True, default=None)
+    title = models.CharField(max_length=500, null=True, blank=True, default=None)
     
-class Job(models.Model):
-    id = models.PositiveIntegerField(unique=True, editable=False)
-    deleted = models.BooleanField(default=False, null=True, blank=True)
-    type = models.CharField(max_length=20, choices=items_choices)
-    by = models.CharField(max_length=255, null=True, blank=True)
-    time = UnixDateTimeField()
-    dead = models.BooleanField(null=True, blank=True)
-    kids = models.CharField(validators=int_list_validator, null=True, blank=True)
-    text = models.TextField(null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
-    title = models.CharField(max_length=500, null=True, blank=True)
+    def __str__(self):
+        return f'{self.id}'
     
-class Story(models.Model):
-    id = models.PositiveIntegerField(unique=True, editable=False)
-    deleted = models.BooleanField(default=False, null=True, blank=True)
-    type = models.CharField(max_length=20, choices=items_choices)
-    by = models.CharField(max_length=255, null=True, blank=True)
-    time = UnixDateTimeField()
-    dead = models.BooleanField(null=True, blank=True)
-    kids = models.CharField(validators=int_list_validator, null=True, blank=True)
-    descendants = models.PositiveIntegerField(null=True, blank=True)
-    score = models.PositiveIntegerField(null=True, blank=True)
-    title = models.CharField(max_length=500, null=True, blank=True)
-    url = models.URLField(null=True, blank=True)
+    class Meta:
+        ordering = ["-time"]
     
-class Comment(models.Model):
-    id = models.PositiveIntegerField(unique=True, editable=False)
-    deleted = models.BooleanField(default=False, null=True, blank=True)
-    type = models.CharField(max_length=20, choices=items_choices)
-    by = models.CharField(max_length=255, null=True, blank=True)
-    time = UnixDateTimeField()
-    dead = models.BooleanField(null=True, blank=True)
-    kids = models.CharField(validators=int_list_validator, null=True, blank=True)
-    parent = models.PositiveIntegerField(null=True, blank=True)
-    text = models.TextField(null=True, blank=True)
-
-class Poll(models.Model):
-    id = models.PositiveIntegerField(unique=True, editable=False)
-    deleted = models.BooleanField(default=False, null=True, blank=True)
-    type = models.CharField(max_length=20, choices=items_choices)
-    by = models.CharField(max_length=255, null=True, blank=True)
-    time = UnixDateTimeField()
-    dead = models.BooleanField(null=True, blank=True)
-    kids = models.CharField(validators=int_list_validator, null=True, blank=True)
-    parts = models.CharField(validators=int_list_validator, null=True, blank=True)
-    descendants = models.PositiveIntegerField(null=True, blank=True)
-    score = models.PositiveIntegerField(null=True, blank=True)
-    title = models.CharField(max_length=500, null=True, blank=True)
-    text = models.TextField(null=True, blank=True)
-    
-class PollOption(models.Model):
-    id = models.PositiveIntegerField(unique=True, editable=False)
-    deleted = models.BooleanField(default=False, null=True, blank=True)
-    type = models.CharField(max_length=20, choices=items_choices)
-    by = models.CharField(max_length=255, null=True, blank=True)
-    time = UnixDateTimeField()
-    dead = models.BooleanField(null=True, blank=True)
-    kids = models.CharField(validators=int_list_validator, null=True, blank=True)
-    parent = models.PositiveIntegerField(null=True, blank=True)
-    score = models.PositiveIntegerField(null=True, blank=True)
