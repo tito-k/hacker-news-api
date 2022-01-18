@@ -21,7 +21,7 @@ class StorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Base
         fields = ['id', 'type', 'by', 'time', 'kids',
-                  'descendants', 'score', 'title', 'url']
+                  'descendants', 'score', 'text', 'title', 'url']
         read_only_fields = ['id']
 
 
