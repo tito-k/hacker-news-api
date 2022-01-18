@@ -27,16 +27,17 @@ class BaseViewSet(viewsets.ModelViewSet):
             paginator.page_query_param = page_query_param
             if type and query:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, type=type, text__icontains=query)
+                    deleted=False, dead=False, type=type, text__icontains=query, is_latest=True)
             elif type:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, type=type)
+                    deleted=False, dead=False, type=type, is_latest=True)
             elif query:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, text__icontains=query)
+                    deleted=False, dead=False, text__icontains=query, is_latest=True)
                 print(filtered_news)
             else:
-                filtered_news = Base.objects.filter(deleted=False, dead=False)
+                filtered_news = Base.objects.filter(
+                    deleted=False, dead=False, is_latest=True)
             context = paginator.paginate_queryset(filtered_news, self)
             job_data = []
             story_data = []
@@ -135,19 +136,19 @@ class BaseViewSet(viewsets.ModelViewSet):
             title = None
         if type == 'job':
             Base.objects.create(type=type, by=by, time=time,
-                                kids=kids, text=text, url=url, title=title)
+                                kids=kids, text=text, url=url, title=title, is_from_hacker_news=False)
         elif type == 'story':
             Base.objects.create(type=type, by=by, time=time,
-                                descendants=descendants, score=score, title=title, url=url)
+                                descendants=descendants, score=score, title=title, url=url, is_from_hacker_news=False)
         elif type == 'comment':
             Base.objects.create(type=type, by=by, time=time,
-                                kids=kids, parent=parent, text=text)
+                                kids=kids, parent=parent, text=text, is_from_hacker_news=False)
         elif type == 'poll':
             Base.objects.create(type=type, by=by, time=time, kids=kids, parts=parts,
-                                descendants=descendants, score=score, title=title, text=text)
+                                descendants=descendants, score=score, title=title, text=text, is_from_hacker_news=False)
         elif type == 'pollopt':
             Base.objects.create(type=type, by=by, time=time,
-                                kids=kids, parent=parent, score=score)
+                                kids=kids, parent=parent, score=score, is_from_hacker_news=False)
         else:
             response = {
                 "status": "error",
@@ -159,8 +160,117 @@ class BaseViewSet(viewsets.ModelViewSet):
             "message": f"{type.capitalize()} by {by} created successfully!"
         }
         return Response(data=response, status=status.HTTP_200_OK)
-        # response = {
-        #     "status": "success",
-        #     "message": f"HAQ!"
-        # }
-        # return Response(data=response, status=status.HTTP_200_OK)
+
+    @api_view(['PATCH'])
+    def update_news_by_id(self, id):
+        try:
+            news = Base.objects.get(pk=id)
+            if news.is_from_hacker_news:
+                response = {
+                    "status": "error",
+                    "message": "You cannot update a news from Hacker News!"
+                }
+                return Response(data=response, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            if 'type' in self.data:
+                type = self.data['type']
+            else:
+                type = news.type
+            if 'by' in self.data:
+                by = self.data['by']
+            else:
+                by = news.by
+            time = datetime.now()
+            if 'kids' in self.data:
+                kids = self.data['kids']
+            elif news.kids is not None:
+                kids = news.kids
+            else:
+                kids = None
+            if 'parts' in self.data:
+                parts = self.data['parts']
+            elif news.parts is not None:
+                parts = news.parts
+            else:
+                parts = None
+            if 'parent' in self.data:
+                parent = self.data['parent']
+            elif news.parent is not None:
+                parent = news.parent
+            else:
+                parent = None
+            if 'text' in self.data:
+                text = self.data['text']
+            elif news.text is not None:
+                text = news.text
+            else:
+                text = None
+            if 'descendants' in self.data:
+                descendants = self.data['descendants']
+            elif news.descendants is not None:
+                descendants = news.descendant
+            else:
+                descendants = None
+            if 'score' in self.data:
+                score = self.data['score']
+            elif news.score is not None:
+                score = news.score
+            else:
+                score = None
+            if 'url' in self.data:
+                url = self.data['url']
+            elif news.url is not None:
+                url = news.url
+            else:
+                url = None
+            if 'title' in self.data:
+                title = self.data['title']
+            elif news.title is not None:
+                title = news.title
+            else:
+                title = None
+            news.type = type
+            news.by = by
+            news.time = time
+            news.kids = kids
+            news.parts = parts
+            news.parent = parent
+            news.text = text
+            news.descendants = descendants
+            news.score = score
+            news.url = url
+            news.title = title
+            news.save()
+            response = {
+                "status": "success",
+                "message": f"{(news.type).capitalize()} by {news.by} updated successfully!"
+            }
+            return Response(data=response, status=status.HTTP_200_OK)
+        except:
+            response = {
+                "status": "error",
+                "message": "No News Found!"
+            }
+            return Response(data=response, status=status.HTTP_404_NOT_FOUND)
+
+    @api_view(['DELETE'])
+    def delete_news_by_id(self, id):
+        try:
+            news = Base.objects.get(pk=id)
+            if news.is_from_hacker_news:
+                response = {
+                    "status": "error",
+                    "message": "You cannot update a news from Hacker News!"
+                }
+                return Response(data=response, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            news.delete()
+            response = {
+                "status": "success",
+                "message": f"{news.type.capitalize()} by {news.by} deleted successfully!"
+            }
+            return Response(data=response, status=status.HTTP_200_OK)
+        except:
+            response = {
+                "status": "error",
+                "message": "No News Found!"
+            }
+            return Response(data=response, status=status.HTTP_404_NOT_FOUND)
