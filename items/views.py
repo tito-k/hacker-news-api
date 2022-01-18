@@ -27,17 +27,70 @@ class BaseViewSet(viewsets.ModelViewSet):
             paginator.page_query_param = page_query_param
             if type and query:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, type=type, text__icontains=query, is_latest=True)
+                    deleted=False, dead=False, type=type, text__icontains=query, is_top=False)
             elif type:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, type=type, is_latest=True)
+                    deleted=False, dead=False, type=type, is_top=False)
             elif query:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, text__icontains=query, is_latest=True)
-                print(filtered_news)
+                    deleted=False, dead=False, text__icontains=query, is_top=False)
             else:
                 filtered_news = Base.objects.filter(
-                    deleted=False, dead=False, is_latest=True)
+                    deleted=False, dead=False, is_top=False)
+            context = paginator.paginate_queryset(filtered_news, self)
+            job_data = []
+            story_data = []
+            comment_data = []
+            poll_data = []
+            pollopt_data = []
+            for i in range(len(context)):
+                if context[i].type == 'job':
+                    job_data.append(context[i])
+                elif context[i].type == 'story':
+                    story_data.append(context[i])
+                elif context[i].type == 'comment':
+                    comment_data.append(context[i])
+                elif context[i].type == 'poll':
+                    poll_data.append(context[i])
+                elif context[i].type == 'pollopt':
+                    pollopt_data.append(context[i])
+            serialized_data = []
+            if len(job_data) > 0:
+                job_serialized_data = JobSerializer(job_data, many=True).data
+                serialized_data.extend(job_serialized_data)
+            if len(story_data) > 0:
+                story_serialized_data = StorySerializer(
+                    story_data, many=True).data
+                serialized_data.extend(story_serialized_data)
+            if len(comment_data) > 0:
+                comment_serialized_data = CommentSerializer(
+                    comment_data, many=True).data
+                serialized_data.extend(comment_serialized_data)
+            if len(poll_data) > 0:
+                poll_serialized_data = PollSerializer(
+                    poll_data, many=True).data
+                serialized_data.extend(poll_serialized_data)
+            if len(pollopt_data) > 0:
+                pollopt_serialized_data = PollOptionSerializer(
+                    pollopt_data, many=True).data
+                serialized_data.extend(pollopt_serialized_data)
+            return paginator.get_paginated_response(serialized_data)
+        except:
+            response = {
+                "status": "error",
+                "message": "No News Found!"
+            }
+            return Response(data=response, status=status.HTTP_404_NOT_FOUND)
+
+    @api_view(['GET'])
+    def top_news(self):
+        try:
+            page_query_param = 'page'
+            paginator = PageNumberPagination()
+            paginator.page_size = 15
+            paginator.page_query_param = page_query_param
+            filtered_news = Base.objects.filter(
+                deleted=False, dead=False, is_top=True)
             context = paginator.paginate_queryset(filtered_news, self)
             job_data = []
             story_data = []

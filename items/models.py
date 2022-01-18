@@ -20,7 +20,7 @@ class Base(models.Model):
     url = models.URLField(max_length=512, null=True, blank=True, default=None)
     title = models.CharField(max_length=500, null=True, blank=True, default=None)
     is_from_hacker_news = models.BooleanField(default=True)
-    is_latest = models.BooleanField(default=True)
+    is_top = models.BooleanField(default=False)
     
     def __str__(self):
         return f'{self.id}'
