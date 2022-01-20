@@ -10,7 +10,6 @@ python -m venv venv
 pip install -r requirements.txt
 python manage.py makemigrations
 python manage.py migrate
-python manage.py createsuperuser
 python manage.py runserver
 ```
 
@@ -20,7 +19,7 @@ In a separate terminal window, create your schedule in the database, then start 
 .\venv\Scripts\activate
 python manage.py shell
 # Create a repeating schedule using Django Shell. Copy and paste the path below
-exec(open('../hacker-news-api/items/tasks.py').read())
+exec(open('../hacker-news-api/items/scheduler.py').read())
 # Exit the Django shell
 exit()
 # Then run the Q cluster
