@@ -6,8 +6,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from .models import Base
-from .serializer import BaseSerializer, JobSerializer, StorySerializer, CommentSerializer, PollSerializer, PollOptionSerializer
+from items.models import Base
+from items.serializer import BaseSerializer, JobSerializer, StorySerializer, CommentSerializer, PollSerializer, PollOptionSerializer
+from items.tasks import get_top_level_comments
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -129,6 +130,50 @@ class BaseViewSet(viewsets.ModelViewSet):
                     pollopt_data, many=True).data
                 serialized_data.extend(pollopt_serialized_data)
             return paginator.get_paginated_response(serialized_data)
+        except:
+            response = {
+                "status": "error",
+                "message": "No News Found!"
+            }
+            return Response(data=response, status=status.HTTP_404_NOT_FOUND)
+
+    @api_view(['GET'])
+    def top_news_detail_by_id(self, id):
+        top_news = Base.objects.get(pk=id)
+
+        try:
+            if top_news.is_top is False:
+                response = {
+                    "status": "error",
+                    "message": "You can only get the detail of a TopNews!"
+                }
+                return Response(data=response, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            if top_news.type == 'job':
+                serialized_data = JobSerializer(top_news, many=False).data
+            elif top_news.type == 'story':
+                serialized_data = StorySerializer(top_news, many=False).data
+            elif top_news.type == 'comment':
+                serialized_data = CommentSerializer(top_news, many=False).data
+            elif top_news.type == 'poll':
+                serialized_data = PollSerializer(top_news, many=False).data
+            elif top_news.type == 'pollopt':
+                serialized_data = PollOptionSerializer(
+                    top_news, many=False).data
+            if top_news.kids is not None:
+                comments = top_news.kids
+                get_top_level_comments(comments)
+                total_comments = Base.objects.filter(
+                    type="comment", parent=top_news.id, deleted=False, dead=False, is_top=True)
+                serialized_comments = CommentSerializer(
+                    total_comments, many=True).data
+            response = {
+                "status": "success",
+                "data": {
+                    "parent": serialized_data,
+                    "comments": serialized_comments
+                },
+            }
+            return Response(data=response, status=status.HTTP_200_OK)
         except:
             response = {
                 "status": "error",
